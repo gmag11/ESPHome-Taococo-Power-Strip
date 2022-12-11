@@ -1,0 +1,134 @@
+esphome:
+  name: "${device_name}"
+
+substitutions:
+  device_name: "taococo"
+  relay_restore_mode: RESTORE_DEFAULT_ON
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: True
+
+preferences:
+  flash_write_interval: 1min
+  
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: True
+
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${device_name} Fallback Hotspot"
+    password: "ywBlrZUs4alq"
+
+captive_portal:
+
+web_server:
+  port: 80
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 1
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${device_name} Button"
+    on_multi_click:
+    - timing: 
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Quadruple Click - socket 4"
+        - switch.toggle: relay4
+    - timing: 
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Tripple Click - socket 3"
+        - switch.toggle: relay3
+    - timing: 
+        - ON for at most 0.4s
+        - OFF for at most 0.4s
+        - ON for at most 0.4s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Double Click - socket 2"
+        - switch.toggle: relay2
+    - timing: 
+        - ON for at most 0.5s
+        - OFF for at least 0.4s
+      then:
+        - logger.log: "Single Click - socket 1"
+        - switch.toggle: relay1 
+    - timing: 
+        - ON for 0.6s to 3s
+        - OFF for at least 0.3s
+      then:
+        - logger.log: "Single Long Click - USB"
+        - switch.toggle: relay5
+  - platform: status
+    name: "${device_name} Status" 
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO3
+    inverted: True 
+light:
+  - platform: monochromatic
+    name: "${device_name} LED"
+    output: blue_led
+switch:
+  - platform: gpio
+    name: "${device_name} Socket 1"
+    pin: GPIO12
+    id: relay1
+    restore_mode: ${relay_restore_mode}
+  - platform: gpio
+    name: "${device_name} Socket 2"
+    pin: GPIO14
+    id: relay2
+    restore_mode: ${relay_restore_mode}
+  - platform: gpio
+    name: "${device_name} Socket 3"
+    pin: GPIO4
+    id: relay3
+    restore_mode: ${relay_restore_mode}
+  - platform: gpio
+    name: "${device_name} Socket 4"
+    pin: GPIO13
+    id: relay4
+    restore_mode: ${relay_restore_mode}
+  - platform: gpio
+    name: "${device_name} USB"
+    pin: GPIO5
+    id: relay5 
+    restore_mode: ${relay_restore_mode}
+
+sensor:
+  # WiFi Signal Sensor
+  - platform: wifi_signal
+    name: "${device_name} WiFi Signal"
+    update_interval: 60s
+    
